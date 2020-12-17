@@ -123,25 +123,16 @@ void my_rotate(int dim, pixel *src, pixel *dst, int *rusage_time, unsigned long 
 
 /* ANY CHANGES ARE MADE HERE */
 /* below are the main computations for your implementation of the rotate. Any changes in implementation will go here or the other functions it may call */
-	unsigned int y = dim,counter = -1;
 	
-	while (y != 0){
-		y = y >> 1;
-		counter++;
-	}
-	for (i = 0; i != dim; i++){
-		y = ((dim-1-i)<<counter);
-		for (j = 0; j != dim; j+=8){
-			//dst[x+j] = src[((j*dim)+(i))];
-			//*(dst+(y + (j))) = src[((j*dim)+(i))];
-			*(dst+(y + (j))) = *(src+(((j)<<counter)+(i)));
-			*(dst+(y + (j+1))) = *(src+(((j+1)<<counter)+(i)));
-			*(dst+(y + (j+2))) = *(src+(((j+2)<<counter)+(i)));
-			*(dst+(y + (j+3))) = *(src+(((j+3)<<counter)+(i)));
-			*(dst+(y + (j+4))) = *(src+(((j+4)<<counter)+(i)));
-			*(dst+(y + (j+5))) = *(src+(((j+5)<<counter)+(i)));
-			*(dst+(y + (j+6))) = *(src+(((j+6)<<counter)+(i)));
-			*(dst+(y + (j+7))) = *(src+(((j+7)<<counter)+(i)));
+	/** 16x cache blocking*/
+	unsigned int a, b;
+    for(a=0; a < dim; a+=16){
+		for(b=0; b < dim; b+=16){
+			for(i=a; i < a+16; i++) {
+				for(j=b; j < b+16; j++) {
+					dst[RIDX(dim-1-j,i,dim)] = src[RIDX(i,j,dim)];
+				}
+			}
 		}
 	}
 
@@ -155,9 +146,6 @@ void my_rotate(int dim, pixel *src, pixel *dst, int *rusage_time, unsigned long 
 	*rusage_time = rusage_end_time - rusage_start_time;
 	*rdtsc_time = rdtsc_end_time - rdtsc_start_time;
 }
-
-
-
 
 
 /***************
