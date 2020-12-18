@@ -277,9 +277,30 @@ void my_smooth(int dim, pixel *src, pixel *dst, int *rusage_time, unsigned long 
 /* ANY CHANGES TO BE MADE SHOULD BE BELOW HERE */
 /* below are the main computations for your implementation of the smooth function. Any changes in implementation will go here or the other functiosn it calls */
 
+	/** Loop interchange*/
 	for (i = 0; i < dim; i++){
 		for (j = 0; j < dim; j++){
-			dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+			/** avg()*/
+			int ii, jj;
+			pixel_sum sum;
+			pixel current_pixel;
+
+			initialize_pixel_sum(&sum);
+			for(ii = maximum(i-1, 0); ii <= minimum(i+1, dim-1); ii++){
+				for(jj = maximum(j-1, 0); jj <= minimum(j+1, dim-1); jj++) {
+					/** accumulate_sum()*/
+					sum.red += (int) src[RIDX(ii, jj, dim)].red;
+					sum.green += (int) src[RIDX(ii, jj, dim)].green;
+					sum.blue += (int) src[RIDX(ii, jj, dim)].blue;
+					sum.num++;
+				}
+			}
+			/** assign_sum_to_pixel()*/
+			current_pixel.red = (unsigned short) (sum.red/sum.num);
+			current_pixel.green = (unsigned short) (sum.green/sum.num);
+			current_pixel.blue = (unsigned short) (sum.blue/sum.num);
+
+			dst[RIDX(i, j, dim)] = current_pixel;
 		}
 	}
 
