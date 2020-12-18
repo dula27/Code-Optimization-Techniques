@@ -163,3 +163,45 @@ Dimension naive_rotate my_rotate    naive_rotate my_rotate
 ```
 
 After analyzing the result we can see a significant reduction in number of clock cycles used to execute the program. This shows that indeed improvement has been made in terms of cache hits and misses. Averages show us that our program is about `44.6%` more efficient!
+
+## Smooth Algorithm
+
+The code we are provided with:
+
+```c
+for (j = 0; j < dim; j++)
+	for (i = 0; i < dim; i++)
+		dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+```
+
+Here is the detailed analysis for each of the technique I have used
+
+### Loop Interchange
+
+```c
+for (i = 0; i < dim; i++){
+	for (j = 0; j < dim; j++){
+		dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+	}
+}
+```
+
+This type of optimization will change the nesting of loops to access data in order stored in memory. This can be achieved by simply interchanging the nexted `for loop` statements.
+
+The results we get after implementing Loop Interchange technique are:
+
+```c
+Testing Smooth:
+          Time in milliseconds      Cycles used
+==========================================================
+Dimension naive_smooth my_smooth    naive_smooth my_smooth
+==========================================================
+256       18830        18076        45095488     43292233
+512       81455        75527        195049221    180855943
+1024      418556       312824       1002242567   749056168
+2048      2538873      1559780      6079258730   3734843340
+```
+
+We can see that there is a change in number of clock cycles used when the loop statments are interchanged. The nested loop in naive_smooth function was accessing memory in a non sequential order, simpley interchanging the loop statements will result in accessing the data in a sequential order. This preserves the correctness of the program since, now it is sequential access instead of striding through memory every `dim` times. This improves the spatial locality of the program.
+
+We can analyze an improvement of code efficiency by `35.6%`. This barely reaches the 30% code efficency improvement we are looking for.
