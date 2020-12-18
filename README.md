@@ -204,4 +204,57 @@ Dimension naive_smooth my_smooth    naive_smooth my_smooth
 
 We can see that there is a change in number of clock cycles used when the loop statments are interchanged. The nested loop in naive_smooth function was accessing memory in a non sequential order, simpley interchanging the loop statements will result in accessing the data in a sequential order. This preserves the correctness of the program since, now it is sequential access instead of striding through memory every `dim` times. This improves the spatial locality of the program.
 
-We can analyze an improvement of code efficiency by `35.6%`. This barely reaches the 30% code efficency improvement we are looking for.
+We can analyze an improvement of code efficiency by `35.6%`. This reaches the 30% code efficency improvement we are looking for, but we still have room for improvement. We see there are multiple finctions being called inside eachother. To fix that we will implement another technique building up on loop interchange optimization that we just wrote.
+
+### Function Inlining
+
+One function call in `c` is equivalent to a number of instructions in machine code. Each time a function is called, there are `book keeping` records added onto the stack. This includes the Activation records and allocates more memory. This would use more registers as well since it returns back to the memory address where the function was called. In machine code after every function call, the stack is popped and pushed so adding to the `IC`.
+
+```c
+/** Loop interchange*/
+for (i = 0; i < dim; i++){
+	for (j = 0; j < dim; j++){
+		/** avg()*/
+		int ii, jj;
+		pixel_sum sum;
+		pixel current_pixel;
+
+		initialize_pixel_sum(&sum);
+		for(ii = maximum(i-1, 0); ii <= minimum(i+1, dim-1); ii++){
+			for(jj = maximum(j-1, 0); jj <= minimum(j+1, dim-1); jj++) {
+				/** accumulate_sum()*/
+				sum.red += (int) src[RIDX(ii, jj, dim)].red;
+				sum.green += (int) src[RIDX(ii, jj, dim)].green;
+				sum.blue += (int) src[RIDX(ii, jj, dim)].blue;
+				sum.num++;
+			}
+		}
+		/** assign_sum_to_pixel()*/
+		current_pixel.red = (unsigned short) (sum.red/sum.num);
+		current_pixel.green = (unsigned short) (sum.green/sum.num);
+		current_pixel.blue = (unsigned short) (sum.blue/sum.num);
+
+		dst[RIDX(i, j, dim)] = current_pixel;
+	}
+}
+```
+
+In this code I have implemented `Function Inlining` so that no function is called inside the loop. The instructions of function `avg()` are added in line. I have removed the return values. Then the two functions `accumulate_sum()` and `assign_sum_to_pixel()` are also written in line to avoid any function call. I have changed the `->` pointer to `.` pointer because the value was passed by reference in the parameter. 
+
+By using `Function Inlining` technique for optimization, I achieved and overall improvement in perfomance. It removed all the bookkeeping instructions, instructions to Push arguments to stack, instructions to Push frame pointer, instructions to Pop return value, reset frame pointer and Pop return address. All of these instructions times `dim*dim` instruction count have been reduced improving the code efficiency of this smooth function.
+
+The results we get are:
+
+```c
+Testing Smooth:
+          Time in milliseconds      Cycles used
+==========================================================
+Dimension naive_smooth my_smooth    naive_smooth my_smooth
+==========================================================
+256       12479        10011        29886915     23976092
+512       77332        39869        185175219    95471239
+1024      253839       166803       607813167    399409712
+2048      1219843      657657       2920872424   1574743394
+```
+
+We can observe an overall `44%` of improvement in our efficiency, which is a lot better. So in conclusion `Sequential Memory Access` in combination with `Function Inlining` has improved the code efficiency and this is the algorithm I have implemented in `my_smooth()` function.
