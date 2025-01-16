@@ -1,4 +1,4 @@
-# Project-6-Code-Optimization Report
+#Code-Optimization Report
 
 ## Rotation Algorithm
 
